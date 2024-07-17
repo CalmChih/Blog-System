@@ -1,102 +1,61 @@
-package top.fallingintodreams.blogsystem.services.impl;
+package top.fallingintodreams.blog.system.services.impl;
 
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
+
+import cn.dev33.satoken.stp.StpUtil;
 import jakarta.annotation.Resource;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import top.fallingintodreams.flying.bicycle.backend.common.Constant;
-import top.fallingintodreams.flying.bicycle.backend.dao.IUserAccountDao;
-import top.fallingintodreams.flying.bicycle.backend.dao.IUserDao;
-import top.fallingintodreams.flying.bicycle.backend.dto.UserAccountDTO;
-import top.fallingintodreams.flying.bicycle.backend.dto.UserInfoDTO;
-import top.fallingintodreams.flying.bicycle.backend.po.User;
-import top.fallingintodreams.flying.bicycle.backend.po.UserAccount;
-import top.fallingintodreams.flying.bicycle.backend.service.UserService;
-import top.fallingintodreams.flying.bicycle.backend.util.DateConvertUtils;
-import top.fallingintodreams.flying.bicycle.backend.vo.UserInfoVO;
+import org.springframework.stereotype.Service;
+import top.fallingintodreams.blog.system.common.ApiResponse;
+import top.fallingintodreams.blog.system.dao.IUserDao;
+import top.fallingintodreams.blog.system.po.User;
+import top.fallingintodreams.blog.system.services.UserService;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
-/**
- * 用户信息 服务实现类
- *
- * @author Chih
- * @date 2024/2/25 19:56
- */
-@Repository
+@Service
 public class UserServiceImpl implements UserService {
-
+    
     @Resource
     private IUserDao userDao;
-    @Resource
-    private IUserAccountDao userAccountDao;
-
+    
     @Override
-    @Transactional(rollbackFor = RuntimeException.class)
-    public void registerAccount(UserAccountDTO userAccountDTO) {
+    public ApiResponse registerUser(User user) {
+        if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword())) {
+            return ApiResponse.error("用户名或密码不能为空");
+        }
+        User userInfo = userDao.getUser(user);
+        if (Objects.nonNull(userInfo)) {
+            return ApiResponse.error("用户名已存在");
+        }
+        user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
+        userDao.insertUser(user);
+        return ApiResponse.success("注册成功");
+    }
+    
+    @Override
+    public ApiResponse getUserInfo() {
+        long userId = StpUtil.getLoginIdAsLong();
         User user = new User();
-        user.setNickname(RandomStringUtils.randomAlphanumeric(8));
-        userDao.insertUserInfo(user);
-        UserAccount userAccount = new UserAccount();
-        userAccount.setUsername(userAccountDTO.getUsername());
-        userAccount.setPassword(BCrypt.hashpw(RandomStringUtils.randomAlphanumeric(12), BCrypt.gensalt()));
-        userAccount.setUserId(user.getId());
-        userAccountDao.insertUserAccount(userAccount);
+        user.setUserId(userId);
+        User res = userDao.getUser(user);
+        return ApiResponse.success(res);
     }
-
+    
     @Override
-    public User getUserInfo(String username) {
-        return userDao.getUserInfo(username);
-    }
-
-    @Override
-    public void updateUserInfo(User user) {
-        userDao.updateUserInfo(user);
-    }
-
-    @Override
-    public Map<String, Object> getUserList(Map<String, Object> searchMap) {
-        if (searchMap.get("currentPage") != null && searchMap.get("pageSize") != null) {
-            int currentPage = (int) searchMap.get("currentPage");
-            int pageSize = (int) searchMap.get("pageSize");
-            PageHelper.startPage(currentPage, pageSize);
+    public ApiResponse login(User user) {
+        if (StringUtils.isBlank(user.getUsername()) || StringUtils.isBlank(user.getPassword())) {
+            return ApiResponse.error("用户名或密码不能为空");
         }
-        List<UserInfoVO> userList = userDao.getUserList(searchMap);
-        List<UserInfoDTO> userDTOList = userList.stream().map(this::vo2Dto).collect(Collectors.toList());
-        PageInfo<UserInfoVO> pageInfo = new PageInfo<>(userList);
-        Map<String, Object> resultMap = new HashMap<>();
-        resultMap.put("list", userDTOList);
-        resultMap.put("total", pageInfo.getTotal());
-        return resultMap;
-    }
-
-    private UserInfoDTO vo2Dto(UserInfoVO userInfoVO) {
-        if (Objects.isNull(userInfoVO)) {
-            return null;
+        User userInfo = userDao.getUser(user);
+        if (Objects.isNull(userInfo)) {
+            return ApiResponse.error("用户名不存在");
         }
-        UserInfoDTO userInfoDTO = new UserInfoDTO();
-        userInfoDTO.setId(userInfoVO.getId());
-        userInfoDTO.setUsername(userInfoVO.getUsername());
-        userInfoDTO.setNickname(userInfoVO.getNickname());
-        userInfoDTO.setGender(Constant.GenderEnum.convert(userInfoVO.getGender()));
-        userInfoDTO.setBirthday(DateConvertUtils.dateFormatToString(userInfoVO.getBirthday()));
-        userInfoDTO.setMobile(userInfoVO.getMobile());
-        userInfoDTO.setState(Constant.UserStateEnum.convert(userInfoVO.getState()));
-        userInfoDTO.setCreateTime(DateConvertUtils.dateFormatToString(userInfoVO.getCreateTime()));
-        return userInfoDTO;
+        if (!BCrypt.checkpw(user.getPassword(), userInfo.getPassword())) {
+            return ApiResponse.error("密码错误");
+        }
+        StpUtil.login(userInfo.getUserId());
+        return ApiResponse.success("登录成功");
     }
-
-    @Override
-    @Transactional
-    public void updateUserState(Map<String, Object> searchMap) {
-        userDao.updateUserState(searchMap);
-        userAccountDao.updateAccountState(searchMap);
-    }
+    
 }

@@ -1,4 +1,4 @@
-package top.fallingintodreams.blogsystem;
+package top.fallingintodreams.blog.system;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

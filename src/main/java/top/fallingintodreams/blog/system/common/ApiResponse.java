@@ -1,6 +1,15 @@
-package top.fallingintodreams.blogsystem.common;
+package top.fallingintodreams.blog.system.common;
 
-public class ApiResponse {
+import lombok.Data;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+@Data
+public class ApiResponse implements Serializable {
+    
+    @Serial
+    private static final long serialVersionUID = 2633609520611856010L;
     
     private int code;
     private String msg;

@@ -1,4 +1,4 @@
-package top.fallingintodreams.blogsystem;
+package top.fallingintodreams.blog.system;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

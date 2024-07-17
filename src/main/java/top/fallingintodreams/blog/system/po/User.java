@@ -1,4 +1,4 @@
-package top.fallingintodreams.blogsystem.po;
+package top.fallingintodreams.blog.system.po;
 
 import lombok.Data;
 

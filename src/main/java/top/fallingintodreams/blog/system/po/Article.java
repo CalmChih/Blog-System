@@ -1,11 +1,11 @@
-package top.fallingintodreams.blogsystem.po;
+package top.fallingintodreams.blog.system.po;
 
 import lombok.Data;
 
 import java.util.Date;
 
 @Data
-public class article {
+public class Article {
     
     private Long postId;
     private String title;

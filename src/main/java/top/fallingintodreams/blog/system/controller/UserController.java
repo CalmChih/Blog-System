@@ -1,14 +1,15 @@
-package top.fallingintodreams.blogsystem.controller;
+package top.fallingintodreams.blog.system.controller;
 
-import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import top.fallingintodreams.blogsystem.common.ApiResponse;
-import top.fallingintodreams.blogsystem.services.UserService;
+import top.fallingintodreams.blog.system.common.ApiResponse;
+import top.fallingintodreams.blog.system.po.User;
+import top.fallingintodreams.blog.system.services.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -16,26 +17,21 @@ public class UserController {
 
     @Resource
     private UserService userService;
-    @Resource
-    private UserAccountService userAccountService;
 
+    @SaCheckLogin
     @GetMapping("/me")
     public ApiResponse getUserInfo() {
-        String username = StpUtil.getLoginIdAsString();
-        User userInfo = userService.getUserInfo(username);
-        return ApiResponse.success(userInfo);
+        return userService.getUserInfo();
     }
 
     @PostMapping("/login")
-    public ApiResponse updateUserInfo(@RequestBody User user) {
-        userService.updateUserInfo(user);
-        return ApiResponse.success("更新成功");
+    public ApiResponse login(@RequestBody User user) {
+        return userService.login(user);
     }
 
     @PostMapping("/register")
-    public ApiResponse updatePassword(@RequestBody UserAccountDTO userAccountDTO) {
-        userAccountService.updatePassword(userAccountDTO);
-        return ApiResponse.success("更新成功");
+    public ApiResponse updatePassword(@RequestBody User user) {
+        return userService.registerUser(user);
     }
     
 }
