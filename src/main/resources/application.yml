@@ -7,6 +7,8 @@ spring:
     url: jdbc:mysql://localhost:3306/blog_system?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=UTC
     username: root
     password: 123456
+  application:
+    name: blog-system
 
 mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
